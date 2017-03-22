@@ -470,6 +470,35 @@ class DatatableQuery
         return $data;
     }
 
+    /**
+     * Add query callback.
+     *
+     * @param $callback
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function addQueryCallback($callback)
+    {
+        if (!is_callable($callback)) {
+            throw new Exception(sprintf('Callable expected and %s given', gettype($callback)));
+        }
+
+        $this->callbacks['Query'][] = $callback;
+
+        return $this;
+    }
+
+    private function applyQueryCallbacks($query)
+    {
+        if(!empty($this->callbacks['Query'])) {
+            foreach ($this->callbacks['Query'] as $callback) {
+                $query = $callback($query);
+            }
+        }
+        return $query;
+    }
+
     //-------------------------------------------------
     // Build a query
     //-------------------------------------------------
@@ -679,6 +708,7 @@ class DatatableQuery
     private function execute()
     {
         $query = $this->qb->getQuery();
+        $query = $this->applyQueryCallbacks($query);
 
         if (true === $this->configs['translation_query_hints']) {
             if (true === $this->doctrineExtensions) {
